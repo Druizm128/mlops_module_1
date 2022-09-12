@@ -49,7 +49,9 @@ def import_data(pth):
     output:
             df: pandas dataframe
     '''	
-    pass
+    logging.info("Loading file ...")
+    return pd.read_csv(pth)
+
 
 def perform_eda(df):
     '''
@@ -60,7 +62,12 @@ def perform_eda(df):
     output:
             None
     '''
-    pass
+    
+    logging.info("Performing EDA ...")
+    print(df.head())
+    print(df.shape)
+    print(df.isnull().sum())
+    print(df.describe())
 
 
 def encoder_helper(df, category_lst, response):
@@ -146,12 +153,10 @@ if __name__ == "__main__":
     
     logging.info("Executing program ...")
     
-    df = pd.read_csv(r"./data/bank_data.csv")
-    df.head()
-    df.shape
-    df.isnull().sum()
-    df.describe()
+    df = import_data(r"./data/bank_data.csv")
     
+    perform_eda(df)
+
     cat_columns = [
         'Gender',
         'Education_Level',
