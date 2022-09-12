@@ -69,6 +69,24 @@ def perform_eda(df):
     print(df.isnull().sum())
     print(df.describe())
 
+    plt.figure(figsize=(20,10)) 
+    df['Churn'].hist();
+
+    plt.figure(figsize=(20,10)) 
+    df['Customer_Age'].hist();
+
+    plt.figure(figsize=(20,10)) 
+    df.Marital_Status.value_counts('normalize').plot(kind='bar');
+
+    plt.figure(figsize=(20,10)) 
+    # distplot is deprecated. Use histplot instead
+    # sns.distplot(df['Total_Trans_Ct']);
+    # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
+    sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True);
+
+    plt.figure(figsize=(20,10)) 
+    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
+    plt.show()
 
 def encoder_helper(df, category_lst, response):
     '''
@@ -154,7 +172,9 @@ if __name__ == "__main__":
     logging.info("Executing program ...")
     
     df = import_data(r"./data/bank_data.csv")
-    
+
+    df['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+   
     perform_eda(df)
 
     cat_columns = [
@@ -182,26 +202,8 @@ if __name__ == "__main__":
         'Avg_Utilization_Ratio'
     ]
 
-    df['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
 
-    plt.figure(figsize=(20,10)) 
-    df['Churn'].hist();
 
-    plt.figure(figsize=(20,10)) 
-    df['Customer_Age'].hist();
-
-    plt.figure(figsize=(20,10)) 
-    df.Marital_Status.value_counts('normalize').plot(kind='bar');
-
-    plt.figure(figsize=(20,10)) 
-    # distplot is deprecated. Use histplot instead
-    # sns.distplot(df['Total_Trans_Ct']);
-    # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
-    sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True);
-
-    plt.figure(figsize=(20,10)) 
-    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
-    plt.show()
 
     y = df['Churn']
     X = pd.DataFrame()
