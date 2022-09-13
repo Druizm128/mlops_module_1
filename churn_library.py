@@ -107,7 +107,7 @@ def encoder_helper(train_X, test_X, category_lst, quant_lst):
     return (X_train_clean, X_test_clean)
 
 
-def perform_feature_engineering(df, response):
+def perform_feature_engineering(df):
     '''
     input:
               df: pandas dataframe
@@ -119,6 +119,14 @@ def perform_feature_engineering(df, response):
               y_train: y training data
               y_test: y testing data
     '''
+    # Create X and Y
+    logging.info("Separate X, y ...") 
+    y = df['Churn']
+    X = df.loc[:, quant_columns + cat_columns]
+    # Train-test split
+    logging.info("Splitting train-test ...") 
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    return X_train, X_test, y_train, y_test
 
 def classification_report_image(y_train,
                                 y_test,
@@ -203,12 +211,9 @@ if __name__ == "__main__":
         'Total_Ct_Chng_Q4_Q1', 
         'Avg_Utilization_Ratio'
     ]
-    # Create X and Y
-    y = df['Churn']
-    X = df.loc[:, quant_columns + cat_columns]
+
     # Train Test Split
-    logging.info("Splitting train-test ...") 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)    
+    X_train, X_test, y_train, y_test = perform_feature_engineering(df)
 
     # One Hot Encoder
     logging.info("Preprocessing ...") 
