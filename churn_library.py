@@ -78,7 +78,7 @@ def perform_eda(df):
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
     plt.show()
 
-def encoder_helper(df, category_lst, response):
+def encoder_helper(train_X, test_X, category_lst, quant_lst):
     '''
     helper function to turn each categorical column into a new column with
     propotion of churn for each category - associated with cell 15 from the notebook
@@ -89,9 +89,22 @@ def encoder_helper(df, category_lst, response):
             response: string of response name [optional argument that could be used for naming variables or index y column]
 
     output:
-            df: pandas dataframe with new columns for
+            df: pandas dataframe with X_train_clean
+            df: pandas dataframe with X_test_clean
     '''
-    pass
+    # One Hot Encoding
+    logging.info("One hot encoding categorical variables ...")
+    ohe = OneHotEncoder(handle_unknown='ignore')
+    ohe.fit(train_X.loc[:, category_lst])
+    ohe_labels = ohe.get_feature_names_out()
+    X_train_cat_clean = pd.DataFrame(ohe.transform(train_X.loc[:, category_lst]).toarray(), columns = ohe_labels)
+    X_test_cat_clean = pd.DataFrame(ohe.transform(test_X.loc[:, category_lst]).toarray(), columns = ohe_labels)
+    # Cleaning train-test
+    X_train_quant = train_X.loc[:, quant_lst]
+    X_test_quant = test_X.loc[:, quant_lst]
+    X_train_clean = pd.concat([X_train_quant.reset_index(), X_train_cat_clean.reset_index()], axis = 1)
+    X_test_clean = pd.concat([X_test_quant.reset_index(), X_test_cat_clean.reset_index()], axis = 1)
+    return (X_train_clean, X_test_clean)
 
 
 def perform_feature_engineering(df, response):
@@ -195,19 +208,11 @@ if __name__ == "__main__":
     X = df.loc[:, quant_columns + cat_columns]
     # Train Test Split
     logging.info("Splitting train-test ...") 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)    
-    # One Hot Encoding
-    logging.info("One hot encoding categorical variables ...")
-    ohe = OneHotEncoder(handle_unknown='ignore')
-    ohe.fit(X_train.loc[:, cat_columns])
-    ohe_labels = ohe.get_feature_names_out()
-    X_train_cat_clean = pd.DataFrame(ohe.transform(X_train.loc[:, cat_columns]).toarray(), columns = ohe_labels)
-    X_test_cat_clean = pd.DataFrame(ohe.transform(X_test.loc[:, cat_columns]).toarray(), columns = ohe_labels)
-    # Cleaning train-test
-    X_train_quant = X_train.loc[:, quant_columns]
-    X_test_quant = X_test.loc[:, quant_columns]
-    X_train_clean = pd.concat([X_train_quant.reset_index(), X_train_cat_clean.reset_index()], axis = 1)
-    X_test_clean = pd.concat([X_test_quant.reset_index(), X_test_cat_clean.reset_index()], axis = 1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)    
+
+    # One Hot Encoder
+    logging.info("Preprocessing ...") 
+    X_train_clean, X_test_clean = encoder_helper(X_train, X_test, category_lst=cat_columns, quant_lst=quant_columns)
 
     logging.info("Training models ...")
     # Use a different solver if the default 'lbfgs' fails to converge
