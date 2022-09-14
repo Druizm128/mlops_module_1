@@ -69,9 +69,6 @@ def perform_eda(df):
     df.Marital_Status.value_counts('normalize').plot(kind='bar');
 
     plt.figure(figsize=(20,10)) 
-    # distplot is deprecated. Use histplot instead
-    # sns.distplot(df['Total_Trans_Ct']);
-    # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True);
 
     plt.figure(figsize=(20,10)) 
@@ -148,10 +145,23 @@ def classification_report_image(y_train,
     output:
              None
     '''
-    pass
+    # scores
+    logging.info("Evaluating Random Forest ...")
+    print('random forest results')
+    print('test results')
+    print(classification_report(y_test, y_test_preds_rf))
+    print('train results')
+    print(classification_report(y_train, y_train_preds_rf))
+    logging.info("Evaluating Logistic Regression ...")
+    print('logistic regression results')
+    print('test results')
+    print(classification_report(y_test, y_test_preds_lr))
+    print('train results')
+    print(classification_report(y_train, y_train_preds_lr))
 
 
-def feature_importance_plot(model, X_data, output_pth):
+
+def feature_importance_plot(model, X_data, output_pth = None):
     '''
     creates and stores the feature importances in pth
     input:
@@ -162,7 +172,21 @@ def feature_importance_plot(model, X_data, output_pth):
     output:
              None
     '''
-    pass
+    # Calculate feature importances
+    importances = model.feature_importances_
+    # Sort feature importances in descending order
+    indices = np.argsort(importances)[::-1]
+    # Rearrange feature names so they match the sorted feature importances
+    names = [X_data.columns[i] for i in indices]
+    # Create plot
+    plt.figure(figsize=(20,5))
+    # Create plot title
+    plt.title("Feature Importance")
+    plt.ylabel('Importance')
+    # Add bars
+    plt.bar(range(X_data.shape[1]), importances[indices])
+    # Add feature names as x-axis labels
+    plt.xticks(range(X_data.shape[1]), names, rotation=90);
 
 def train_models(X_train, X_test, y_train, y_test):
     '''
@@ -175,7 +199,56 @@ def train_models(X_train, X_test, y_train, y_test):
     output:
               None
     '''
-    pass
+    logging.info("Training models ...")
+    # Use a different solver if the default 'lbfgs' fails to converge
+    # Reference: https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
+
+    # Grid search
+    rfc = RandomForestClassifier(random_state=42)
+    param_grid = { 
+        'n_estimators': [200],
+        #'n_estimators': [200, 500],
+        #'max_features': ['auto', 'sqrt'],
+        #'max_depth' : [4,5,100],
+        #'criterion' :['gini', 'entropy']
+    }
+
+    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
+    logging.info("Training Random Forest ...")
+    cv_rfc.fit(X_train, y_train)
+    logging.info("Training Logistic Regression ...")
+    lrc.fit(X_train, y_train)
+
+    logging.info("Predicting ...")
+    y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
+    y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
+
+    y_train_preds_lr = lrc.predict(X_train)
+    y_test_preds_lr = lrc.predict(X_test)
+
+    # Model evaluation
+    classification_report_image(y_train,
+                                y_test,
+                                y_train_preds_lr,
+                                y_train_preds_rf,
+                                y_test_preds_lr,
+                                y_test_preds_rf)
+
+
+    # plots
+    logging.info("Generating ROC curves ...")
+    lrc_plot = RocCurveDisplay.from_estimator(lrc, X_test_clean, y_test)
+    plt.figure(figsize=(15, 8))
+    ax = plt.gca()
+    rfc_disp = RocCurveDisplay.from_estimator(cv_rfc.best_estimator_, X_test_clean, y_test, ax=ax, alpha=0.8)
+    lrc_plot.plot(ax=ax, alpha=0.8)
+    plt.show()
+
+    # Save best models
+    logging.info("Saving models ...")
+    joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
+    joblib.dump(lrc, './models/logistic_model.pkl')
 
 
 if __name__ == "__main__":
@@ -219,102 +292,23 @@ if __name__ == "__main__":
     logging.info("Preprocessing ...") 
     X_train_clean, X_test_clean = encoder_helper(X_train, X_test, category_lst=cat_columns, quant_lst=quant_columns)
 
-    logging.info("Training models ...")
-    # Use a different solver if the default 'lbfgs' fails to converge
-    # Reference: https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
-    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
 
-    # Grid search
-    rfc = RandomForestClassifier(random_state=42)
-    param_grid = { 
-        'n_estimators': [200],
-        #'n_estimators': [200, 500],
-        #'max_features': ['auto', 'sqrt'],
-        #'max_depth' : [4,5,100],
-        #'criterion' :['gini', 'entropy']
-    }
+    # Train models
+    logging.info("Modelling ...")
+    train_models(X_train_clean, X_test_clean, y_train, y_test)
 
-    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
-    logging.info("Training Random Forest ...")
-    cv_rfc.fit(X_train_clean, y_train)
-    logging.info("Training Logistic Regression ...")
-    lrc.fit(X_train_clean, y_train)
-
-    logging.info("Predicting ...")
-    y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train_clean)
-    y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test_clean)
-
-    y_train_preds_lr = lrc.predict(X_train_clean)
-    y_test_preds_lr = lrc.predict(X_test_clean)
-
-    # scores
-    logging.info("Evaluating Random Forest ...")
-    print('random forest results')
-    print('test results')
-    print(classification_report(y_test, y_test_preds_rf))
-    print('train results')
-    print(classification_report(y_train, y_train_preds_rf))
-    logging.info("Evaluating Logistic Regression ...")
-    print('logistic regression results')
-    print('test results')
-    print(classification_report(y_test, y_test_preds_lr))
-    print('train results')
-    print(classification_report(y_train, y_train_preds_lr))
-    # plots
-    logging.info("Generating ROC curves ...")
-    lrc_plot = RocCurveDisplay.from_estimator(lrc, X_test_clean, y_test)
-    plt.figure(figsize=(15, 8))
-    ax = plt.gca()
-    rfc_disp = RocCurveDisplay.from_estimator(cv_rfc.best_estimator_, X_test_clean, y_test, ax=ax, alpha=0.8)
-    lrc_plot.plot(ax=ax, alpha=0.8)
-    plt.show()
-    # Save best models
-    logging.info("Saving models ...")
-    joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
-    joblib.dump(lrc, './models/logistic_model.pkl')
     # Load best models
     logging.info("Loading models ...")
     rfc_model = joblib.load('./models/rfc_model.pkl')
     lr_model = joblib.load('./models/logistic_model.pkl')
-    # Plot from best models
-    logging.info("Generating ROC curves ...")
-    lrc_plot = RocCurveDisplay.from_estimator(lr_model, X_test_clean, y_test)
-    plt.figure(figsize=(15, 8))
-    ax = plt.gca()
-    rfc_disp = RocCurveDisplay.from_estimator(rfc_model, X_test_clean, y_test, ax=ax, alpha=0.8)
-    lrc_plot.plot(ax=ax, alpha=0.8)
-    plt.show()
+
     # Shap values
     logging.info("Generating Shap Value Plot for Random Forest ...")
-    explainer = shap.TreeExplainer(cv_rfc.best_estimator_)
+    explainer = shap.TreeExplainer(rfc_model)
     shap_values = explainer.shap_values(X_test_clean)
     shap.summary_plot(shap_values, X_test_clean, plot_type="bar")
-    # Calculate feature importances
-    importances = cv_rfc.best_estimator_.feature_importances_
-    # Sort feature importances in descending order
-    indices = np.argsort(importances)[::-1]
-    # Rearrange feature names so they match the sorted feature importances
-    names = [X_train_clean.columns[i] for i in indices]
-    # Create plot
-    plt.figure(figsize=(20,5))
-    # Create plot title
-    plt.title("Feature Importance")
-    plt.ylabel('Importance')
-    # Add bars
-    plt.bar(range(X_train_clean.shape[1]), importances[indices])
-    # Add feature names as x-axis labels
-    plt.xticks(range(X_train_clean.shape[1]), names, rotation=90);
-    plt.rc('figure', figsize=(5, 5))
-    #plt.text(0.01, 0.05, str(model.summary()), {'fontsize': 12}) old approach
-    plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.axis('off');
-    plt.rc('figure', figsize=(5, 5))
-    plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.axis('off');
+
+    # Feature importances
+    feature_importance_plot(rfc_model, X_test_clean, output_pth = None)
+
     logging.info("Execution SUCCESSFULL")
