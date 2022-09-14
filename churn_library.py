@@ -4,25 +4,23 @@ and evaluate a customer churn prediction problem
 Author: Dante Ruiz
 '''
 # import libraries
-from ast import main
+import os
+import logging
 import joblib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns; sns.set()
-from sklearn.preprocessing import normalize
-from sklearn.model_selection import train_test_split
+import seaborn as sns
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import RocCurveDisplay, classification_report
 import shap
-import os
-import logging
 os.environ['QT_QPA_PLATFORM']='offscreen'
+# Configure plot theme
 sns.set()
-
+# Setup logging
 logging.basicConfig(
     filename='logs/results.log',
     level=logging.INFO,
@@ -87,7 +85,7 @@ def perform_eda(df):
     plt.ylabel("Count")
     # Features corretlation
     plt.figure(figsize=(20,10)) 
-    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
+    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
     plt.title("Feature correlations")
     plt.savefig("images/feature_correlation.png")
     plt.show()
@@ -95,12 +93,14 @@ def perform_eda(df):
 def encoder_helper(train_X, test_X, category_lst, quant_lst):
     '''
     helper function to turn each categorical column into a new column with
-    propotion of churn for each category - associated with cell 15 from the notebook
+    propotion of churn for each category - associated with cell 15 from the 
+    notebook
 
     input:
         df: pandas dataframe
         category_lst: list of columns that contain categorical features
-        response: string of response name [optional argument that could be used for naming variables or index y column]
+        response: string of response name [optional argument that could be used 
+                  for naming variables or index y column]
 
     output:
         df: pandas dataframe with X_train_clean
@@ -111,13 +111,21 @@ def encoder_helper(train_X, test_X, category_lst, quant_lst):
     ohe = OneHotEncoder(handle_unknown='ignore')
     ohe.fit(train_X.loc[:, category_lst])
     ohe_labels = ohe.get_feature_names_out()
-    X_train_cat_clean = pd.DataFrame(ohe.transform(train_X.loc[:, category_lst]).toarray(), columns = ohe_labels)
-    X_test_cat_clean = pd.DataFrame(ohe.transform(test_X.loc[:, category_lst]).toarray(), columns = ohe_labels)
+    X_train_cat_clean = pd.DataFrame(
+        ohe.transform(train_X.loc[:, category_lst]).toarray(), 
+        columns = ohe_labels)
+    X_test_cat_clean = pd.DataFrame(
+        ohe.transform(test_X.loc[:, category_lst]).toarray(), 
+        columns = ohe_labels)
     # Cleaning train-test
     X_train_quant = train_X.loc[:, quant_lst]
     X_test_quant = test_X.loc[:, quant_lst]
-    X_train_clean = pd.concat([X_train_quant.reset_index(), X_train_cat_clean.reset_index()], axis = 1)
-    X_test_clean = pd.concat([X_test_quant.reset_index(), X_test_cat_clean.reset_index()], axis = 1)
+    X_train_clean = pd.concat([
+        X_train_quant.reset_index(), X_train_cat_clean.reset_index()], 
+        axis=1)
+    X_test_clean = pd.concat(
+        [X_test_quant.reset_index(), X_test_cat_clean.reset_index()], 
+        axis=1)
     return (X_train_clean, X_test_clean)
 
 def perform_feature_engineering(df):
@@ -139,7 +147,10 @@ def perform_feature_engineering(df):
     X = df.loc[:, quant_columns + cat_columns]
     # Train-test split
     logging.info("Splitting train-test ...") 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+                                            X, y, 
+                                            test_size=0.3, 
+                                            random_state=42)
     return X_train, X_test, y_train, y_test
 
 def classification_report_image(y_train,
@@ -177,7 +188,7 @@ def classification_report_image(y_train,
     print('train results')
     print(classification_report(y_train, y_train_preds_lr))
 
-def feature_importance_plot(model, X_data, output_pth = None):
+def feature_importance_plot(model, X_data, output_pth=None):
     '''
     creates and stores the feature importances in pth
 
@@ -267,13 +278,27 @@ def train_models(X_train, X_test, y_train, y_test):
     logging.info("Saving models ...")
     joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
     joblib.dump(lrc, './models/logistic_model.pkl')
+    # Load best models
+    logging.info("Loading models ...")
+    rfc_model = joblib.load('./models/rfc_model.pkl')
+    #lr_model = joblib.load('./models/logistic_model.pkl')
+    # Shap values
+    logging.info("Generating Shap Value Plot for Random Forest ...")
+    explainer = shap.TreeExplainer(rfc_model)
+    shap_values = explainer.shap_values(X_test_clean)
+    shap.summary_plot(shap_values, X_test_clean, plot_type="bar")
+    # Feature importances
+    feature_importance_plot(rfc_model, X_test_clean, output_pth=None)
+    logging.info("Execution SUCCESSFULL")
 
 if __name__ == "__main__":
     logging.info("Executing program ...")
     # Import data
     df = import_data(r"./data/bank_data.csv")
     # Create dependent variable
-    df['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1) 
+    df['Churn'] = (df['Attrition_Flag']
+                        .apply(lambda val: 
+                                    0 if val == "Existing Customer" else 1))
     # Perform EDA
     perform_eda(df)
     # Variable selection
@@ -311,15 +336,3 @@ if __name__ == "__main__":
     # Train models
     logging.info("Modelling ...")
     train_models(X_train_clean, X_test_clean, y_train, y_test)
-    # Load best models
-    logging.info("Loading models ...")
-    rfc_model = joblib.load('./models/rfc_model.pkl')
-    lr_model = joblib.load('./models/logistic_model.pkl')
-    # Shap values
-    logging.info("Generating Shap Value Plot for Random Forest ...")
-    explainer = shap.TreeExplainer(rfc_model)
-    shap_values = explainer.shap_values(X_test_clean)
-    shap.summary_plot(shap_values, X_test_clean, plot_type="bar")
-    # Feature importances
-    feature_importance_plot(rfc_model, X_test_clean, output_pth = None)
-    logging.info("Execution SUCCESSFULL")
