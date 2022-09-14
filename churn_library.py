@@ -5,7 +5,7 @@ and evaluate a customer churn prediction problem
 Author: Dante Ruiz
 '''
 # import libraries
-import shap
+from ast import main
 import joblib
 import pandas as pd
 import numpy as np
@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import RocCurveDisplay, classification_report
-from ast import main
+import shap
 import os
 import logging
 os.environ['QT_QPA_PLATFORM']='offscreen'
@@ -52,27 +52,46 @@ def perform_eda(df):
     output:
             None
     '''
-    
+    # EDA on data frame
     logging.info("Performing EDA ...")
     print(df.head())
     print(df.shape)
     print(df.isnull().sum())
     print(df.describe())
-
+    # Class balance
     plt.figure(figsize=(20,10)) 
-    df['Churn'].hist();
-
+    df['Churn'].hist()
+    plt.title("Class balance distribution")
+    plt.ylabel("Count")
+    plt.xlabel("Class")
+    plt.savefig("images/churn_class_balance.png")
+    plt.show()
+    # Age distribution
     plt.figure(figsize=(20,10)) 
-    df['Customer_Age'].hist();
-
+    df['Customer_Age'].hist()
+    plt.title("Customer age distribution")
+    plt.xlabel("Age")
+    plt.ylabel("Count")
+    plt.savefig("images/customer_age_distribution.png")
+    plt.show()
+    # Marital status distribution
     plt.figure(figsize=(20,10)) 
-    df.Marital_Status.value_counts('normalize').plot(kind='bar');
-
+    df.Marital_Status.value_counts('normalize').plot(kind='bar')
+    plt.title("Customer marital status class distribution")
+    plt.ylabel("Count")
+    plt.savefig("images/marital_status_distribution.png")
+    plt.show()
+    # Total transactions count
     plt.figure(figsize=(20,10)) 
-    sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True);
-
+    sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
+    plt.title("Total transcations count distribution")
+    plt.xlabel("Total transactions count")
+    plt.ylabel("Count")
+    # Features corretlation
     plt.figure(figsize=(20,10)) 
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
+    plt.title("Feature correlations")
+    plt.savefig("images/feature_correlation.png")
     plt.show()
 
 def encoder_helper(train_X, test_X, category_lst, quant_lst):
@@ -200,12 +219,9 @@ def train_models(X_train, X_test, y_train, y_test):
               None
     '''
     logging.info("Training models ...")
-    # Use a different solver if the default 'lbfgs' fails to converge
-    # Reference: https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
     lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
-
-    # Grid search
     rfc = RandomForestClassifier(random_state=42)
+    # Grid search
     param_grid = { 
         'n_estimators': [200],
         #'n_estimators': [200, 500],
@@ -213,7 +229,6 @@ def train_models(X_train, X_test, y_train, y_test):
         #'max_depth' : [4,5,100],
         #'criterion' :['gini', 'entropy']
     }
-
     cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
     logging.info("Training Random Forest ...")
     cv_rfc.fit(X_train, y_train)
@@ -304,9 +319,9 @@ if __name__ == "__main__":
 
     # Shap values
     logging.info("Generating Shap Value Plot for Random Forest ...")
-    explainer = shap.TreeExplainer(rfc_model)
-    shap_values = explainer.shap_values(X_test_clean)
-    shap.summary_plot(shap_values, X_test_clean, plot_type="bar")
+    #explainer = shap.TreeExplainer(rfc_model)
+    #shap_values = explainer.shap_values(X_test_clean)
+    #shap.summary_plot(shap_values, X_test_clean, plot_type="bar")
 
     # Feature importances
     feature_importance_plot(rfc_model, X_test_clean, output_pth = None)
