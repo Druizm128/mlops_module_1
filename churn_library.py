@@ -63,7 +63,7 @@ def perform_eda(df):
     plt.ylabel("Count")
     plt.xlabel("Class")
     plt.savefig("images/churn_class_balance.png")
-    plt.show()
+    #plt.show()
     # Age distribution
     plt.figure(figsize=(20, 10))
     df['Customer_Age'].hist()
@@ -71,14 +71,14 @@ def perform_eda(df):
     plt.xlabel("Age")
     plt.ylabel("Count")
     plt.savefig("images/customer_age_distribution.png")
-    plt.show()
+    #plt.show()
     # Marital status distribution
     plt.figure(figsize=(20, 10))
     df.Marital_Status.value_counts('normalize').plot(kind='bar')
     plt.title("Customer marital status class distribution")
     plt.ylabel("Count")
     plt.savefig("images/marital_status_distribution.png")
-    plt.show()
+    #plt.show()
     # Total transactions count
     plt.figure(figsize=(20, 10))
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
@@ -90,7 +90,7 @@ def perform_eda(df):
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
     plt.title("Feature correlations")
     plt.savefig("images/feature_correlation.png")
-    plt.show()
+    #plt.show()
 
 
 def encoder_helper(train_X, test_X, category_lst, quant_lst):
@@ -132,7 +132,7 @@ def encoder_helper(train_X, test_X, category_lst, quant_lst):
     return (X_train_clean, X_test_clean)
 
 
-def perform_feature_engineering(df):
+def perform_feature_engineering(df, quant_columns, cat_columns):
     '''
     input:
         df: pandas dataframe
@@ -222,7 +222,7 @@ def feature_importance_plot(model, X_data, output_pth=None):
     # Add feature names as x-axis labels
     plt.xticks(range(X_data.shape[1]), names, rotation=90)
     plt.savefig("images/feature_importances.png")
-    plt.show()
+    #plt.show()
 
 
 def train_models(X_train, X_test, y_train, y_test):
@@ -269,18 +269,18 @@ def train_models(X_train, X_test, y_train, y_test):
                                 y_test_preds_rf)
     # plots
     logging.info("Generating ROC curves ...")
-    lrc_plot = RocCurveDisplay.from_estimator(lrc, X_test_clean, y_test)
+    lrc_plot = RocCurveDisplay.from_estimator(lrc, X_test, y_test)
     plt.figure(figsize=(15, 8))
     ax = plt.gca()
     RocCurveDisplay.from_estimator(cv_rfc.best_estimator_,
-                                   X_test_clean,
+                                   X_test,
                                    y_test,
                                    ax=ax,
                                    alpha=0.8)
     lrc_plot.plot(ax=ax, alpha=0.8)
     plt.title("Models ROC Curves")
     plt.savefig("images/model_roc_curves.png")
-    plt.show()
+    #plt.show()
     # Save best models
     logging.info("Saving models ...")
     joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
@@ -292,10 +292,10 @@ def train_models(X_train, X_test, y_train, y_test):
     # Shap values
     logging.info("Generating Shap Value Plot for Random Forest ...")
     explainer = shap.TreeExplainer(rfc_model)
-    shap_values = explainer.shap_values(X_test_clean)
-    shap.summary_plot(shap_values, X_test_clean, plot_type="bar")
+    shap_values = explainer.shap_values(X_test)
+    shap.summary_plot(shap_values, X_test, plot_type="bar")
     # Feature importances
-    feature_importance_plot(rfc_model, X_test_clean, output_pth=None)
+    feature_importance_plot(rfc_model, X_test, output_pth=None)
     logging.info("Execution SUCCESSFULL")
 
 
@@ -334,7 +334,7 @@ if __name__ == "__main__":
         'Avg_Utilization_Ratio'
     ]
     # Train Test Split
-    X_train, X_test, y_train, y_test = perform_feature_engineering(df)
+    X_train, X_test, y_train, y_test = perform_feature_engineering(df, quant_columns, cat_columns)
     # One Hot Encoder
     logging.info("Preprocessing ...")
     X_train_clean, X_test_clean = encoder_helper(X_train,
