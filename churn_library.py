@@ -97,6 +97,7 @@ def perform_eda(df):
     plt.title("Feature correlations")
     plt.savefig(f"{PATH_EDA_IMAGES}/heatmap.png")
     #plt.show()
+    plt.clf()
 
 
 def encoder_helper(train_X, test_X, category_lst, quant_lst):
@@ -186,6 +187,7 @@ def classification_report_image(y_train,
         None
     '''
     # scores
+
     logging.info("Evaluating Random Forest ...")
     print('random forest results')
     print('test results')
@@ -198,6 +200,25 @@ def classification_report_image(y_train,
     print(classification_report(y_test, y_test_preds_lr))
     print('train results')
     print(classification_report(y_train, y_train_preds_lr))
+
+    logging.info("Creating classification report images ...")
+    plt.rc('figure', figsize=(5, 5))
+    plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.axis('off')
+    plt.savefig(f"{PATH_RESULTS_IMAGES}/rf_results.png")
+    plt.clf()
+
+    plt.rc('figure', figsize=(5, 5))
+    plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.axis('off')
+    plt.savefig(f"{PATH_RESULTS_IMAGES}/logistic_results.png")
+    plt.clf()
 
 
 def feature_importance_plot(model, X_data, output_pth=None):
@@ -273,6 +294,7 @@ def train_models(X_train, X_test, y_train, y_test):
                                 y_train_preds_rf,
                                 y_test_preds_lr,
                                 y_test_preds_rf)
+
     # plots
     logging.info("Generating ROC curves ...")
     lrc_plot = RocCurveDisplay.from_estimator(lrc, X_test, y_test)
@@ -350,3 +372,9 @@ if __name__ == "__main__":
     # Train models
     logging.info("Modelling ...")
     train_models(X_train_clean, X_test_clean, y_train, y_test)
+
+
+
+
+
+
