@@ -20,6 +20,11 @@ import shap
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 # Configure plot theme
 sns.set()
+# Constants
+PATH_DATA = "./data"
+PATH_EDA_IMAGES = "./images/eda"
+PATH_RESULTS_IMAGES = "./images/results"
+PATH_MODELS = "./models"
 # Setup logging
 logging.basicConfig(
     filename='logs/results.log',
@@ -62,7 +67,7 @@ def perform_eda(df):
     plt.title("Class balance distribution")
     plt.ylabel("Count")
     plt.xlabel("Class")
-    plt.savefig("images/churn_class_balance.png")
+    plt.savefig(f"{PATH_EDA_IMAGES}/churn_distribution.png")
     #plt.show()
     # Age distribution
     plt.figure(figsize=(20, 10))
@@ -70,14 +75,14 @@ def perform_eda(df):
     plt.title("Customer age distribution")
     plt.xlabel("Age")
     plt.ylabel("Count")
-    plt.savefig("images/customer_age_distribution.png")
+    plt.savefig(f"{PATH_EDA_IMAGES}/customer_age_distribution.png")
     #plt.show()
     # Marital status distribution
     plt.figure(figsize=(20, 10))
     df.Marital_Status.value_counts('normalize').plot(kind='bar')
     plt.title("Customer marital status class distribution")
     plt.ylabel("Count")
-    plt.savefig("images/marital_status_distribution.png")
+    plt.savefig(f"{PATH_EDA_IMAGES}/marital_status_distribution.png")
     #plt.show()
     # Total transactions count
     plt.figure(figsize=(20, 10))
@@ -85,11 +90,12 @@ def perform_eda(df):
     plt.title("Total transcations count distribution")
     plt.xlabel("Total transactions count")
     plt.ylabel("Count")
+    plt.savefig(f"{PATH_EDA_IMAGES}/total_transaction_distribution.png")
     # Features corretlation
     plt.figure(figsize=(20, 10))
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
     plt.title("Feature correlations")
-    plt.savefig("images/feature_correlation.png")
+    plt.savefig(f"{PATH_EDA_IMAGES}/heatmap.png")
     #plt.show()
 
 
@@ -221,7 +227,7 @@ def feature_importance_plot(model, X_data, output_pth=None):
     plt.bar(range(X_data.shape[1]), importances[indices])
     # Add feature names as x-axis labels
     plt.xticks(range(X_data.shape[1]), names, rotation=90)
-    plt.savefig("images/feature_importances.png")
+    plt.savefig(f"{PATH_RESULTS_IMAGES}/feature_importances.png")
     #plt.show()
 
 
@@ -279,16 +285,16 @@ def train_models(X_train, X_test, y_train, y_test):
                                    alpha=0.8)
     lrc_plot.plot(ax=ax, alpha=0.8)
     plt.title("Models ROC Curves")
-    plt.savefig("images/model_roc_curves.png")
+    plt.savefig(f"{PATH_RESULTS_IMAGES}/model_roc_curves.png")
     #plt.show()
     # Save best models
     logging.info("Saving models ...")
-    joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
-    joblib.dump(lrc, './models/logistic_model.pkl')
+    joblib.dump(cv_rfc.best_estimator_, f"{PATH_MODELS}/rfc_model.pkl")
+    joblib.dump(lrc, f"{PATH_MODELS}/logistic_model.pkl")
     # Load best models
     logging.info("Loading models ...")
-    rfc_model = joblib.load('./models/rfc_model.pkl')
-    #lr_model = joblib.load('./models/logistic_model.pkl')
+    rfc_model = joblib.load(f"{PATH_MODELS}/rfc_model.pkl")
+    #lr_model = joblib.load(f"{PATH_MODELS}//logistic_model.pkl")
     # Shap values
     logging.info("Generating Shap Value Plot for Random Forest ...")
     explainer = shap.TreeExplainer(rfc_model)
@@ -302,7 +308,7 @@ def train_models(X_train, X_test, y_train, y_test):
 if __name__ == "__main__":
     logging.info("Executing program ...")
     # Import data
-    df = import_data(r"./data/bank_data.csv")
+    df = import_data(f"{PATH_DATA}/bank_data.csv")
     # Create dependent variable
     df['Churn'] = (df['Attrition_Flag']
                    .apply(lambda val:
