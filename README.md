@@ -11,6 +11,7 @@
 ## Files and data description
 Overview of the files and data present in the root directory. 
 
+```
 .
 ├── churn_notebook.ipynb # Contains the model MVP
 ├── churn_library.py     # Python library with the churn functions and pipeline.
@@ -23,28 +24,30 @@ Overview of the files and data present in the root directory.
 │   └── results          # Store modelling results in png
 ├── logs                 # Store logs
 └── models               # Store models
+```
+
 ## Running Files
 
 1. To execute the machine learning pipeline you first need to install a python environment and install the libraries.
 You can use pyenv virtualenv. 
 
 2. Install the package dependencies to ensure reproducibility. By running:
-
-    pip install -r requirements_py3.10.txt
-
+```
+pip install -r requirements_py3.10.txt
+```
 3. Then clone the repository
 
 4. Then run the pipline
-    
+```
     ipython churn_library.py
-
+```
 5. (Optional) If you want to run the test execute
-
-    ipython churn_script_logging_and_tests.py
-
-    or
-
-    pytest churn_script_logging_and_tests.py
-
+```
+ipython churn_script_logging_and_tests.py
+```
+or
+```
+pytest churn_script_logging_and_tests.py
+```
 
 
