@@ -68,7 +68,7 @@ def perform_eda(df):
     plt.ylabel("Count")
     plt.xlabel("Class")
     plt.savefig(f"{PATH_EDA_IMAGES}/churn_distribution.png")
-    #plt.show()
+    # plt.show()
     # Age distribution
     plt.figure(figsize=(20, 10))
     df['Customer_Age'].hist()
@@ -76,14 +76,14 @@ def perform_eda(df):
     plt.xlabel("Age")
     plt.ylabel("Count")
     plt.savefig(f"{PATH_EDA_IMAGES}/customer_age_distribution.png")
-    #plt.show()
+    # plt.show()
     # Marital status distribution
     plt.figure(figsize=(20, 10))
     df.Marital_Status.value_counts('normalize').plot(kind='bar')
     plt.title("Customer marital status class distribution")
     plt.ylabel("Count")
     plt.savefig(f"{PATH_EDA_IMAGES}/marital_status_distribution.png")
-    #plt.show()
+    # plt.show()
     # Total transactions count
     plt.figure(figsize=(20, 10))
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
@@ -96,7 +96,7 @@ def perform_eda(df):
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
     plt.title("Feature correlations")
     plt.savefig(f"{PATH_EDA_IMAGES}/heatmap.png")
-    #plt.show()
+    # plt.show()
     plt.clf()
 
 
@@ -203,19 +203,27 @@ def classification_report_image(y_train,
 
     logging.info("Creating classification report images ...")
     plt.rc('figure', figsize=(5, 5))
-    plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.text(0.01, 1.25, str('Random Forest Train'), {
+             'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
+    plt.text(0.01, 0.6, str('Random Forest Test'), {
+             'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
     plt.axis('off')
     plt.savefig(f"{PATH_RESULTS_IMAGES}/rf_results.png")
     plt.clf()
 
     plt.rc('figure', figsize=(5, 5))
-    plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.text(0.01, 1.25, str('Logistic Regression Train'),
+             {'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
+    plt.text(0.01, 0.6, str('Logistic Regression Test'), {
+             'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
     plt.axis('off')
     plt.savefig(f"{PATH_RESULTS_IMAGES}/logistic_results.png")
     plt.clf()
@@ -249,7 +257,7 @@ def feature_importance_plot(model, X_data, output_pth=None):
     # Add feature names as x-axis labels
     plt.xticks(range(X_data.shape[1]), names, rotation=90)
     plt.savefig(f"{PATH_RESULTS_IMAGES}/feature_importances.png")
-    #plt.show()
+    # plt.show()
 
 
 def train_models(X_train, X_test, y_train, y_test):
@@ -308,7 +316,7 @@ def train_models(X_train, X_test, y_train, y_test):
     lrc_plot.plot(ax=ax, alpha=0.8)
     plt.title("Models ROC Curves")
     plt.savefig(f"{PATH_RESULTS_IMAGES}/model_roc_curves.png")
-    #plt.show()
+    # plt.show()
     # Save best models
     logging.info("Saving models ...")
     joblib.dump(cv_rfc.best_estimator_, f"{PATH_MODELS}/rfc_model.pkl")
@@ -362,7 +370,8 @@ if __name__ == "__main__":
         'Avg_Utilization_Ratio'
     ]
     # Train Test Split
-    X_train, X_test, y_train, y_test = perform_feature_engineering(df, quant_columns, cat_columns)
+    X_train, X_test, y_train, y_test = perform_feature_engineering(
+        df, quant_columns, cat_columns)
     # One Hot Encoder
     logging.info("Preprocessing ...")
     X_train_clean, X_test_clean = encoder_helper(X_train,
@@ -372,9 +381,3 @@ if __name__ == "__main__":
     # Train models
     logging.info("Modelling ...")
     train_models(X_train_clean, X_test_clean, y_train, y_test)
-
-
-
-
-
-
