@@ -39,7 +39,7 @@ pip install -r requirements_py3.10.txt
 
 4. Then run the pipline
 ```
-    ipython churn_library.py
+ipython churn_library.py
 ```
 5. (Optional) If you want to run the test execute
 ```
