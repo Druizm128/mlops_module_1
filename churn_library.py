@@ -1,7 +1,9 @@
 '''
 This package includes all the functions to train
 and evaluate a customer churn prediction problem
+
 Author: Dante Ruiz
+Creation Date: 2022-09-12
 '''
 # import libraries
 import os
