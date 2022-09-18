@@ -1,3 +1,9 @@
+'''
+This library tests the functions of churn_library.py
+
+Author: Dante Ruiz
+Creation Date: 2022-09-12
+'''
 import os
 import logging
 import churn_library as cl
